@@ -1,0 +1,15 @@
+{
+  "name": "mathessential",
+  "version": "1.0.0",
+  "description": "文字式の計算をする個人プロジェクト。",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "kaito02020424",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.14.1"
+  }
+}
