@@ -5,8 +5,14 @@ export class Monomial<T extends variableDict> {
     private coefficient: number;
     private variables: T;
     constructor(coefficient: number, variables: T) {
-        this.coefficient = coefficient;
-        this.variables = variables;
+        if (coefficient === 0) {
+            this.coefficient = 0;
+            this.variables = {} as T;
+        } else {
+            this.coefficient = coefficient;
+            const variableValues = Object.values(variables).sort();
+            this.variables = variableValues[0] === 0 && variableValues.reverse()[0] === 0 ? {} as T : variables;
+        }
     }
     public getOrder(variable: keyof T): number {
         return this.variables[variable] || 0;
@@ -31,19 +37,37 @@ export class Monomial<T extends variableDict> {
         }
         return str;
     }
-    public plus(right: Monomial<T> | Polynomial): Polynomial {
+    public plus(right: Monomial<variableDict> | Polynomial): Polynomial {
         if (right instanceof Polynomial) {
             return right.plus(this);
         } else {
             return new Polynomial([this, right]).format();
         }
     }
+    public minus(right: Monomial<variableDict> | Polynomial): Polynomial {
+        if (right instanceof Polynomial) {
+            return this.plus(right.multiply(-1));
+        } else if (typeof right === "number") {
+            return new Polynomial([this, new Monomial(-right, {})]).format();
+        } else {
+            return new Polynomial([this, new Monomial(-right.getCoefficient(), right.getVariables())]).format();
+        }
+    }
+    public multiply(right: Monomial<variableDict> | Polynomial | number): Polynomial {
+        if (right instanceof Polynomial) {
+            let newPolynomial = new Polynomial([]);
+            for (const monomial of right.getVariables()) {
+                newPolynomial = newPolynomial.plus(this.multiply(monomial));
+            }
+            return newPolynomial.format();
+        } else if (typeof right === "number") {
+            return new Polynomial([new Monomial(this.coefficient * right, this.variables)]);
+        } else {
+            const newVariables: variableDict = { ...this.variables };
+            for (const variable in right.getVariables()) {
+                newVariables[variable] = (newVariables[variable] || 0) + right.getOrder(variable);
+            }
+            return new Polynomial([new Monomial(this.coefficient * right.getCoefficient(), newVariables)]);
+        }
+    }
 }
-
-
-// Example usage
-const monomial1 = new Monomial(2, { x: 1, y: 2 });
-const monomial2 = new Monomial(3, { x: 2, y: 1 });
-const monomial11 = new Monomial(10, { x: 1, y: 2 });
-const added = monomial1.plus(monomial2).plus(monomial11);
-console.log(added.toString()); // Output: 2*x^1*y^2 + 3*x^2*y^1
